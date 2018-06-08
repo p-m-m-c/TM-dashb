@@ -3,15 +3,17 @@
 # Get the required data with the urllib library
 import urllib3
 import json
-import datetime
 import os
+import sys
+import datetime as dt
 
 # If script is already ran for today, don't run it again
-# with open(file, mode='r') as f:
-#     lines = f.readlines()
+with open('Tom_top_track_popularity.csv', mode='r') as f:
+    lines = f.readlines()
 
-# if lines[-1][:10] == str(dt.datetime.now().date()):
-#     pass  # Stop running the code somehow
+if lines[-1][:10] == str(dt.datetime.now().date()):
+    print('Thread exited: script already ran today')
+    sys.exit(0)  # 0 indicates successful exited
 
 # Load the API key
 try:
