@@ -1,2 +1,5 @@
 # Ignore api_key file
 api_key.txt
+
+# Ignore try.py file
+try.py
