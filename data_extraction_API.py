@@ -43,7 +43,7 @@ class artistInfoRequest:
         try:
             data = json.loads(request.data.decode())
 
-            data_string = [str(datetime.datetime.now().date()),
+            data_string = [str(dt.datetime.now().date()),
                            str(data['artist']['stats']['listeners']),
                            str(data['artist']['stats']['playcount'])]
 
@@ -131,7 +131,7 @@ class topTrackRequest:
                 list_of_track_tuples = self.fetch_top_track_data()
 
                 for tup in list_of_track_tuples:
-                    f.write(str(datetime.datetime.now().date()) + ',' +
+                    f.write(str(dt.datetime.now().date()) + ',' +
                             tup[0] + ',' + tup[1])
                     f.write('\n')
 
@@ -141,8 +141,8 @@ class topTrackRequest:
             print("Something went wrong in writing data to {}".format(csv_name))
 
 
-# Instantiate request
+# Instantiate request for top tracks
 tom_misch_tt_request = topTrackRequest(artist_name='Tom Misch', n_top_tracks=5)
 
-# Write top track data
+# Write top track data to file
 tom_misch_tt_request.write_top_track_data()

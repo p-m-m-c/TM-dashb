@@ -3,3 +3,6 @@ api_key.txt
 
 # Ignore try.py file
 try.py
+
+# Ignore log files
+*.log
