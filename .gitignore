@@ -1,8 +1,11 @@
 # Ignore api_key file
 api_key.txt
 
-# Ignore try.py file
-try.py
+# Ignore mess-around files
+try*.py
 
 # Ignore log files
 *.log
+
+# Local copy of stylesheet
+dash_stylesheet.css
