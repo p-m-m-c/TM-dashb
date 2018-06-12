@@ -91,12 +91,11 @@ class topTrackRequest:
     tracks (via fetch_top_track_data, five in total), and writing this data
     to a csv (write_top_track_data)."""
 
-    def __init__(self, artist_name, n_top_tracks=5):
+    def __init__(self, artist_name):
         self.artist_name = artist_name
         self.initials = artist_name[:3]
-        self.n_top_tracks = n_top_tracks
 
-    def fetch_top_track_data(self):
+    def fetch_top_track_data(self, n_top_tracks):
         """Method of topTrackRequest class. Fetches data with a request object
         from the API, then returns a list of tuples that is taken in by the
         write_top_track_data method for writing the data to file."""
@@ -111,7 +110,7 @@ class topTrackRequest:
 
         track_popularity = [(item['name'], item['playcount'])
                             for item in data['toptracks']['track'] if
-                            int(item['@attr']['rank']) <= self.n_top_tracks]
+                            int(item['@attr']['rank']) <= n_top_tracks]
 
         return track_popularity
 
@@ -128,7 +127,7 @@ class topTrackRequest:
         try:
             with open(csv_name, mode=mode) as f:
 
-                list_of_track_tuples = self.fetch_top_track_data()
+                list_of_track_tuples = self.fetch_top_track_data(n_top_tracks=5)
 
                 for tup in list_of_track_tuples:
                     f.write(str(dt.datetime.now().date()) + ',' +
@@ -142,7 +141,7 @@ class topTrackRequest:
 
 
 # Instantiate request for top tracks
-tom_misch_tt_request = topTrackRequest(artist_name='Tom Misch', n_top_tracks=5)
+tom_misch_tt_request = topTrackRequest(artist_name='Tom Misch')
 
 # Write top track data to file
 tom_misch_tt_request.write_top_track_data()
