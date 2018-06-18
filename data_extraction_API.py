@@ -1,11 +1,11 @@
 # Tom Misch dashboard via Last.fm data
 
-# Get the required data with the urllib library
-import urllib3
-import json
-import os
-import sys
-import datetime as dt
+# Import the necessary libraries
+import urllib3  # For making http requests
+import json  # For parsing the json response
+import os  # For checking files in directory
+import sys  # To exit the script if it has already ran on a given day
+import datetime as dt  # For checking and writing dates and times
 
 # If script is already ran for today, don't run it again
 with open('Tom_top_track_popularity.csv', mode='r') as f:
@@ -30,18 +30,40 @@ HTTP = urllib3.PoolManager()
 
 class artistInfoRequest:
 
-    def __init__(self, artist_name):
+    """
+    Request class for a given artist.
+
+    Valid artist name: any artist that appears in the Last.fm database
+    Valid request types: {artist.getTopTracks, artist.getinfo}
+
+    Methods:
+    writing/fetching generic popularity data (write_popularity_data);
+    writing/fetching top tracks to a csv (write_top_track_data);
+    fetch similar artists to the specified artist.
+    """
+
+    def __init__(self, artist_name, request_type):
+
+        assert request_type in ['artist.getInfo', 'artist.getTopTracks'], \
+            """
+            Provide valid request type. For examples, see
+            https://www.last.fm/api/intro. Currently implemented ones include
+            artist.getInfo (for generic play- and listener count) and
+            artist.getTopTracks (for best tracks of artist)
+            """
+
         self.artist_name = artist_name
+        self.request_type = request_type
         self.initials = artist_name[:3]
+        self.request = HTTP.request_encode_url(method='GET', url=ROOT_URL,
+                                               fields={'method': self.request_type,
+                                                       'artist': self.artist_name,
+                                                       'format': 'json',
+                                                       'api_key': api_key})
 
     def fetch_popularity_data(self):
-        request = HTTP.request_encode_url(method='GET', url=ROOT_URL,
-                                          fields={'method': 'artist.getinfo',
-                                                  'artist': self.artist_name,
-                                                  'format': 'json',
-                                                  'api_key': api_key})
         try:
-            data = json.loads(request.data.decode())
+            data = json.loads(self.request.data.decode())
 
             data_string = [str(dt.datetime.now().date()),
                            str(data['artist']['stats']['listeners']),
@@ -65,48 +87,21 @@ class artistInfoRequest:
         print("Data written")
 
     def fetch_similar_artists(self):
-        request = HTTP.request_encode_url(method='GET', url=ROOT_URL,
-                                          fields={'method': 'artist.getinfo',
-                                                  'artist': self.artist_name,
-                                                  'format': 'json',
-                                                  'api_key': api_key})
         try:
-            data = json.loads(request.data.decode())
-            similar_artists = [artist['name'] for artist in data['artist']['similar']['artist']]
+            data = json.loads(self.request.data.decode())
+
+            similar_artists = [artist['name'] for artist in
+                               data['artist']['similar']['artist']]
+
         except:
             print("Something went wrong in fetching similar artists")
-
-
-# Steps:
-# 1: Instantiate request
-tom_misch_artist_request = artistInfoRequest("Tom Misch")
-
-# 2: Write and fetch popularity data
-tom_misch_artist_request.write_popularity_data()
-
-
-class topTrackRequest:
-
-    """Request class for top tracks of a given artist. Methods are fetching top
-    tracks (via fetch_top_track_data, five in total), and writing this data
-    to a csv (write_top_track_data)."""
-
-    def __init__(self, artist_name):
-        self.artist_name = artist_name
-        self.initials = artist_name[:3]
 
     def fetch_top_track_data(self, n_top_tracks):
         """Method of topTrackRequest class. Fetches data with a request object
         from the API, then returns a list of tuples that is taken in by the
         write_top_track_data method for writing the data to file."""
 
-        request = HTTP.request_encode_url(method='GET', url=ROOT_URL,
-                                          fields={'method': 'artist.getTopTracks',
-                                                  'artist': self.artist_name,
-                                                  'format': 'json',
-                                                  'api_key': api_key})
-
-        data = json.loads(request.data.decode())
+        data = json.loads(self.request.data.decode())
 
         track_popularity = [(item['name'], item['playcount'])
                             for item in data['toptracks']['track'] if
@@ -117,6 +112,9 @@ class topTrackRequest:
     def write_top_track_data(self):
         """Method of topTrackRequest class. It takes data via a
         topTrackRequest fetch method, then writes it to a csv."""
+
+        assert self.request_type == 'artist.getTopTracks', \
+                                    "Use appropriate request type"
 
         csv_name = self.initials + '_top_track_popularity.csv'
         if os.path.isfile(csv_name):
@@ -137,11 +135,14 @@ class topTrackRequest:
             print('Data written to {}'.format(csv_name))
 
         except:
-            print("Something went wrong in writing data to {}".format(csv_name))
+            print("Error in writing data to {}".format(csv_name))
 
 
-# Instantiate request for top tracks
-tom_misch_tt_request = topTrackRequest(artist_name='Tom Misch')
+# Get and write generic info
+tom_misch_info_request = artistInfoRequest("Tom Misch", 'artist.getInfo')
+tom_misch_info_request.write_popularity_data()
 
-# Write top track data to file
+
+# Get and write top track info
+tom_misch_tt_request = artistInfoRequest('Tom Misch', 'artist.getTopTracks')
 tom_misch_tt_request.write_top_track_data()
