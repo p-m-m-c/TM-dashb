@@ -84,7 +84,7 @@ class artistInfoRequest:
         with open(csv_name, mode=mode) as f:
             f.write(self.fetch_popularity_data())
             f.write('\n')
-        print("Data written")
+        print("Data written to {}".format(csv_name))
 
     def fetch_similar_artists(self):
         try:
