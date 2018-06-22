@@ -7,17 +7,20 @@ import os  # For checking files in directory
 import sys  # To exit the script if it has already ran on a given day
 import datetime as dt  # For checking and writing dates and times
 
+# Provide absolute path to find the .csv file from terminal also
+PATH_PREFIX = "/Users/Paul1/Documents/Persoonlijk/Studie/JADS/Github_files/TM-dashb/"
+
 # If script is already ran for today, don't run it again
-with open('Tom_top_track_popularity.csv', mode='r') as f:
+with open(PATH_PREFIX + 'Tom_top_track_popularity.csv', mode='r') as f:
     lines = f.readlines()
 
-if lines[-1][:10] == str(dt.datetime.now().date()):
+if str(dt.datetime.now().date()) in lines[-1]:
     print('Thread exited: script already ran today')
     sys.exit(0)  # 0 indicates successful exited
 
 # Load the API key
 try:
-    with open("api_key.txt", 'r') as file:
+    with open(PATH_PREFIX + "api_key.txt", 'r') as file:
         api_key = file.readlines()[0]
     print("API key found and read")
 except FileNotFoundError:
@@ -74,9 +77,9 @@ class artistInfoRequest:
             print("Encoding error: try different artist")
 
     def write_popularity_data(self):
-        csv_name = self.initials + '_popularity_data.csv'
+        csv_name = PATH_PREFIX + self.initials + '_popularity_data.csv'
 
-        if os.path.isfile('./' + csv_name):
+        if os.path.isfile(csv_name):
             mode = 'a'  # If file exists, append data
         else:
             mode = 'w'  # If file doesn't exist: create and write
@@ -116,7 +119,7 @@ class artistInfoRequest:
         assert self.request_type == 'artist.getTopTracks', \
                                     "Use appropriate request type"
 
-        csv_name = self.initials + '_top_track_popularity.csv'
+        csv_name = PATH_PREFIX + self.initials + '_top_track_popularity.csv'
         if os.path.isfile(csv_name):
             mode = 'a'
         else:
