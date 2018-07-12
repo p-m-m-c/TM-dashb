@@ -17,7 +17,7 @@ PATH_PREFIX = "/home/polpi/polpi/files/projects/TM-dashb/"
 with open(PATH_PREFIX + 'Tom_top_track_popularity.csv', mode='r') as f:
     lines = f.readlines()
 
-if lines[-1][:10] == str(dt.datetime.now().date()):
+if str(dt.datetime.now().date()) in lines[-1]:
     print('Thread exited: script already ran today')
     sys.exit(0)  # 0 indicates successful exited
 
@@ -83,7 +83,7 @@ class artistInfoRequest:
         csv_name = PATH_PREFIX + self.initials + '_popularity_data.csv'
 
         if os.path.isfile(csv_name):
-            mode = 'a'  # If file exists, append data      
+            mode = 'a'  # If file exists, append data
         else:
             mode = 'w'  # If file doesn't exist: create and write
 
