@@ -11,7 +11,7 @@ import datetime as dt  # For checking and writing dates and times
 print(dt.datetime.now())
 
 # Add path prefix for execution from command line / cron
-PATH_PREFIX = "/home/polpi/polpi/files/projects/TM-dashb/"
+PATH_PREFIX = "/Users/Paul1/Documents/Persoonlijk/Studie/JADS/Github_files/TM-dashb/"
 
 # If script is already ran for today, don't run it again
 with open(PATH_PREFIX + 'Tom_top_track_popularity.csv', mode='r') as f:
