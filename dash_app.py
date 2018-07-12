@@ -8,7 +8,7 @@ import pandas as pd
 popularity_df = pd.read_csv('Tom_popularity_data.csv', parse_dates=['Date'])
 track_pop_df = pd.read_csv('Tom_top_track_popularity.csv', parse_dates=['Date'])
 gr_track_pop_df = track_pop_df.groupby(by='Title')['Playcount'].mean()
-song_time_df = pd.read_csv('Fake_track_data.csv', parse_dates=['Date']).groupby('Title')
+song_time_df = track_pop_df.groupby('Title')
 
 app = dash.Dash()
 app.layout = html.Div([
@@ -66,4 +66,4 @@ server = app.server
 
 # Only use these two lines for development purposes, not for production
 #if __name__ == '__main__':
-#    app.run_server(debug=False, port=5000)
+
