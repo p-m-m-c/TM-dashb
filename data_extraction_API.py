@@ -73,6 +73,9 @@ class artistInfoRequest:
                                                        'api_key': api_key})
 
     def fetch_popularity_data(self):
+    """Method of getInfo class. Fetches the data with a request to the API and structures the 
+       required data into a dictionary that is written in the write_popularity_data method"""
+
         try:
             data = json.loads(self.request.data.decode())
 
@@ -84,9 +87,13 @@ class artistInfoRequest:
             print("Encoding error: try different artist")
 
     def write_popularity_data(self):
+    """Method of getInfo class. Takes the data fetched by the fetch_popularity_data method and 
+       writes the data into MySQL database."""
+
         with eng.connect() as conn:
             track_table = sa.Table('Tom_pop', sa.MetaData(), autoload_with=eng)
             conn.execute(sa.insert(track_table, self.fetch_popularity_data()))
+
         print("Data written to track tbl")
 
     def fetch_similar_artists(self):
@@ -102,7 +109,7 @@ class artistInfoRequest:
     def fetch_top_track_data(self, n_top_tracks):
         """Method of topTrackRequest class. Fetches data with a request object
         from the API, then returns a list of tuples that is taken in by the
-        write_top_track_data method for writing the data to file."""
+        write_top_track_data method for writing the data to the database."""
 
         data = json.loads(self.request.data.decode())
 
@@ -114,20 +121,24 @@ class artistInfoRequest:
 
     def write_top_track_data(self):
         """Method of topTrackRequest class. It takes data via a
-        topTrackRequest fetch method, then writes it to a csv."""
+        topTrackRequest fetch method, then writes it to a MySQL database."""
 
         assert self.request_type == 'artist.getTopTracks', \
                                     "Use appropriate request type"
+
         list_of_track_tuples = self.fetch_top_track_data(n_top_tracks=5)
+
         value_list = [{'Date':str(dt.datetime.now().date()), 'Title':tup[0], 'Playcount':int(tup[1])} for tup in list_of_track_tuples]
+
         with eng.connect() as conn:
             track_pop_tbl = sa.Table('Tom_track_pop', sa.MetaData(), autoload_with=eng)
-            conn.execute(sa.insert(track_pop_tbl, value_list))        
+            conn.execute(sa.insert(track_pop_tbl, value_list))
+        
         print("Data written to Tom_track_pop tbl")
 
 # Get and write generic info
 tom_misch_info_request = artistInfoRequest("Tom Misch", 'artist.getInfo')
-#tom_misch_info_request.write_popularity_data()
+tom_misch_info_request.write_popularity_data()
 
 
 # Get and write top track info
