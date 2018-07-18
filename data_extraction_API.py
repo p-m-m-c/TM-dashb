@@ -19,10 +19,12 @@ PATH_PREFIX = "/home/polpi/polpi/files/projects/TM-dashb/"
 eng = sa.create_engine('mysql+mysqlconnector://root:dbroot@localhost/TM_test')
 
 # If script is already ran for today, don't run it again
-with open(PATH_PREFIX + 'Tom_top_track_popularity.csv', mode='r') as f:
-    lines = f.readlines()
+tom_pop = sa.Table('Tom_pop', sa.MetaData(), autoload_with=eng)
+q = sa.select([tom_pop]).order_by(sa.desc(tom_pop.columns.Date))
+conn = eng.connect()
+latest_date_in_db = str(conn.execute(q).first().Date.date())
 
-if str(dt.datetime.now().date()) in lines[-1]:
+if str(dt.datetime.now().date()) == latest_date_in_db:
     print('Thread exited: script already ran today')
     sys.exit(0)  # 0 indicates successful exited
 
@@ -73,9 +75,10 @@ class artistInfoRequest:
                                                        'api_key': api_key})
 
     def fetch_popularity_data(self):
-    """Method of getInfo class. Fetches the data with a request to the API and structures the 
-       required data into a dictionary that is written in the write_popularity_data method"""
-
+        """
+        Method of getInfo class. Fetches the data with a request to the API and structures the 
+        required data into a dictionary that is written in the write_popularity_data method
+        """
         try:
             data = json.loads(self.request.data.decode())
 
@@ -87,8 +90,9 @@ class artistInfoRequest:
             print("Encoding error: try different artist")
 
     def write_popularity_data(self):
-    """Method of getInfo class. Takes the data fetched by the fetch_popularity_data method and 
-       writes the data into MySQL database."""
+        """
+        Method of getInfo class. Takes the data fetched by the fetch_popularity_data method and 
+        writes the data into MySQL database."""
 
         with eng.connect() as conn:
             track_table = sa.Table('Tom_pop', sa.MetaData(), autoload_with=eng)
@@ -138,9 +142,9 @@ class artistInfoRequest:
 
 # Get and write generic info
 tom_misch_info_request = artistInfoRequest("Tom Misch", 'artist.getInfo')
-tom_misch_info_request.write_popularity_data()
+#tom_misch_info_request.write_popularity_data()
 
 
 # Get and write top track info
 tom_misch_tt_request = artistInfoRequest('Tom Misch', 'artist.getTopTracks')
-tom_misch_tt_request.write_top_track_data()
+#tom_misch_tt_request.write_top_track_data()
