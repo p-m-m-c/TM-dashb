@@ -21,20 +21,16 @@ with eng.connect() as conn:
     track_results = conn.execute(retrieve_track_pop_table).fetchall()
     track_pop_df = pd.DataFrame(track_results, columns=track_results[0].keys()) 
 
-#popularity_df = pd.read_csv('Tom_popularity_data.csv', parse_dates=['Date']) # For total popularity bar chart
-#track_pop_df = pd.read_csv('Tom_top_track_popularity.csv', parse_dates=['Date'])
-
 # Construct grouped dataframes for further processing
 gr_track_pop_df = track_pop_df.groupby(by='Title')['Playcount'].sum()
 song_time_df = track_pop_df.groupby('Title')['Playcount', 'Date']
-
 
 mapper = song_time_df.first()['Playcount'].to_dict() # Take playcount for every song on first observed date
 track_pop_df['Base value'] = track_pop_df['Title'].map(mapper) # Map {title_song -> minimum value} in each row
 track_pop_df['Playcount norm'] = (track_pop_df['Playcount'] / track_pop_df['Base value']) * 100 # Divide playcount by base value to obtain indices
 song_time_df = track_pop_df.groupby('Title') # Redefine for plotting purposes
 
-
+# Step 2: construct app and server
 app = dash.Dash()
 app.layout = html.Div([
     html.H1("Tom Misch Popularity: powered by Last.fm"),
