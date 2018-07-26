@@ -142,9 +142,9 @@ class artistInfoRequest:
 
 # Get and write generic info
 tom_misch_info_request = artistInfoRequest("Tom Misch", 'artist.getInfo')
-#tom_misch_info_request.write_popularity_data()
+tom_misch_info_request.write_popularity_data()
 
 
 # Get and write top track info
 tom_misch_tt_request = artistInfoRequest('Tom Misch', 'artist.getTopTracks')
-#tom_misch_tt_request.write_top_track_data()
+tom_misch_tt_request.write_top_track_data()
