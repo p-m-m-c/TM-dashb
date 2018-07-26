@@ -3,13 +3,32 @@ import dash_html_components as html
 import dash_core_components as dcc
 import plotly.graph_objs as go
 import pandas as pd
+import sqlalchemy as sa
 
-# Step 1: read in the data
-popularity_df = pd.read_csv('Tom_popularity_data.csv', parse_dates=['Date']) # For total popularity bar chart
-track_pop_df = pd.read_csv('Tom_top_track_popularity.csv', parse_dates=['Date'])
-gr_track_pop_df = track_pop_df.groupby(by='Title')['Playcount'].mean() # For donut chart
+# Step 1: read in the data from MySQL database
+eng = sa.create_engine('mysql+mysqlconnector://root:dbroot@localhost/TM_test') # Set up connection
+pop_table = sa.Table('Tom_pop', sa.MetaData(), autoload=True, autoload_with=eng) # Create table object for popularity
+track_table = sa.Table('Tom_track_pop', sa.MetaData(), autoload=True, autoload_with=eng) # Create table object for track popularity
 
+# Define queries for data retrieval
+retrieve_tom_pop_table = sa.select([pop_table])
+retrieve_track_pop_table = sa.select([track_table])
+
+# Execute the queries and store the results in pd DataFrames
+with eng.connect() as conn:
+    popularity_results = conn.execute(retrieve_tom_pop_table).fetchall()
+    popularity_df = pd.DataFrame(popularity_results, columns=popularity_results[0].keys())
+    track_results = conn.execute(retrieve_track_pop_table).fetchall()
+    track_pop_df = pd.DataFrame(track_results, columns=track_results[0].keys()) 
+
+#popularity_df = pd.read_csv('Tom_popularity_data.csv', parse_dates=['Date']) # For total popularity bar chart
+#track_pop_df = pd.read_csv('Tom_top_track_popularity.csv', parse_dates=['Date'])
+
+# Construct grouped dataframes for further processing
+gr_track_pop_df = track_pop_df.groupby(by='Title')['Playcount'].sum()
 song_time_df = track_pop_df.groupby('Title')['Playcount', 'Date']
+
+
 mapper = song_time_df.first()['Playcount'].to_dict() # Take playcount for every song on first observed date
 track_pop_df['Base value'] = track_pop_df['Title'].map(mapper) # Map {title_song -> minimum value} in each row
 track_pop_df['Playcount norm'] = (track_pop_df['Playcount'] / track_pop_df['Base value']) * 100 # Divide playcount by base value to obtain indices
