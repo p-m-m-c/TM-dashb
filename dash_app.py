@@ -17,7 +17,7 @@ retrieve_track_pop_table = sa.select([track_table])
 # Execute the queries and store the results in pd DataFrames
 with eng.connect() as conn:
     popularity_results = conn.execute(retrieve_tom_pop_table).fetchall()
-    popularity_df = pd.DataFrame(popularity_results, columns=popularity_results[0].keys())
+    popularity_df = pd.DataFrame(popularity_results, columns=popularity_results[0].keys()).set_index('Date')
     track_results = conn.execute(retrieve_track_pop_table).fetchall()
     track_pop_df = pd.DataFrame(track_results, columns=track_results[0].keys()) 
 
@@ -37,21 +37,10 @@ app.layout = html.Div([
     html.Div([
         html.Div([
             html.H3('Popularity - Total'),
-            dcc.Graph(id='bar-chart-popularity',
-                      figure={
-                          "data": [go.Bar(x=['Listeners', 'Playcount'],
-                                          y=[popularity_df['Listeners'].max(),
-                                             popularity_df['Playcount'].max()],
-                                          width=0.4,
-                                          marker={'color': ['rgba(20,40,140,1)',
-                                                            'rgba(23,124,60,1)']
-                                                  })],
-                          "layout": {"title": "Total listeners and Playcount",
-                                     "xaxis": {"title": " ",
-                                               "titlefont": {"size": 22}},
-                                     "yaxis": {"title": "Number of listens/plays"}
-                                     }
-                      })], className="six columns"),
+            dcc.Dropdown(id='popularity-indicator', options=[{'label':'Playcount', 'value':'Playcount'}, 
+                                                             {'label':'Listeners', 'value':'Listeners'}], value=['Listeners'], multi=False),
+            dcc.Graph(id='popularity-ts-graph')], className='six columns'),
+
         # Add popularity donut chart
         html.Div([
             html.H3('Popularity - Songs'),
@@ -79,6 +68,19 @@ app.layout = html.Div([
     ], className='row')
 ])
 
+# Implement callback for dropdown graph `popularity-ts-graph`
+@app.callback(
+    dash.dependencies.Output('popularity-ts-graph', 'figure'),
+    [dash.dependencies.Input('popularity-indicator', 'value')]
+)
+def update_figure(indic):
+    traces = [go.Scatter(x=popularity_df[indic].index,
+                                 y=popularity_df[indic].values.ravel(), name=indic)]
+
+    return {'data':traces,
+            'layout': go.Layout(title='Popularity over time',
+                                xaxis={'title': 'Date'},
+                                yaxis={'title': 'Count'})}
 app.css.append_css({
     'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
 })
