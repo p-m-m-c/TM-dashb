@@ -3,7 +3,7 @@ Dash application using Last.FM data about Tom Misch to be served from Ubuntu VM 
 
 ### Functionality per file
 #### Data_extraction_api.py
-Data extraction script makes use of two classes; one for making requests and writing the results to a MySQL database on the same system about the artist, the second one is about the most popular tracks of the artist.
+Data extraction script makes use an artistInfoRequest class with two possible requestTypes: one for making requests and writing the results to a MySQL database on the same system about the artist, the second one is about the _n_ most popular tracks of the artist.
 
 #### Dash_app.py
 Reads the results from the MySQL database and makes some minor transformations using Pandas, then starts a Dash app that is served through the wsgi.py file.
