@@ -1,5 +1,5 @@
 # TM-dashb
-Dash application using Last.FM data about Tom Misch to be served from Ubuntu VM (e.g. via [DigitalOcean](https://www.digitalocean.com/
+Dash application using Last.FM data about Tom Misch to be served from Ubuntu VM (e.g. via [DigitalOcean](https://www.digitalocean.com/))
 
 ### Functionality per file
 #### Data_extraction_api.py
