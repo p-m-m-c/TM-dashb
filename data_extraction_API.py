@@ -6,18 +6,25 @@ import json  # For parsing the json response
 import os  # For checking files in directory
 import sys  # To exit the script if it has already ran on a given day
 import datetime as dt  # For checking and writing dates and times
+import sqlalchemy as sa # For writing to database
+import mysql # For connecting with mysql
 
-# Print date for debugging
+# Print date for logging
 print(dt.datetime.now())
 
 # Add path prefix for execution from command line / cron
 PATH_PREFIX = "/home/polpi/polpi/files/projects/TM-dashb/"
 
-# If script is already ran for today, don't run it again
-with open(PATH_PREFIX + 'Tom_top_track_popularity.csv', mode='r') as f:
-    lines = f.readlines()
+# Setup engine for MySQL db
+eng = sa.create_engine('mysql+mysqlconnector://root:dbroot@localhost/TM_test')
 
-if str(dt.datetime.now().date()) in lines[-1]:
+# If script is already ran for today, don't run it again
+tom_pop = sa.Table('Tom_pop', sa.MetaData(), autoload_with=eng)
+q = sa.select([tom_pop]).order_by(sa.desc(tom_pop.columns.Date))
+conn = eng.connect()
+latest_date_in_db = str(conn.execute(q).first().Date.date())
+
+if str(dt.datetime.now().date()) == latest_date_in_db:
     print('Thread exited: script already ran today')
     sys.exit(0)  # 0 indicates successful exited
 
@@ -68,29 +75,30 @@ class artistInfoRequest:
                                                        'api_key': api_key})
 
     def fetch_popularity_data(self):
+        """
+        Method of getInfo class. Fetches the data with a request to the API and structures the 
+        required data into a dictionary that is written in the write_popularity_data method
+        """
         try:
             data = json.loads(self.request.data.decode())
 
-            data_string = [str(dt.datetime.now().date()),
-                           str(data['artist']['stats']['listeners']),
-                           str(data['artist']['stats']['playcount'])]
-
-            return (',').join(data_string)
+            data_dict = {'Date' : str(dt.datetime.now().date()),
+                           'Listeners' : int(data['artist']['stats']['listeners']),
+                           'Playcount' : int(data['artist']['stats']['playcount'])}
+            return data_dict
         except:
             print("Encoding error: try different artist")
 
     def write_popularity_data(self):
-        csv_name = PATH_PREFIX + self.initials + '_popularity_data.csv'
+        """
+        Method of getInfo class. Takes the data fetched by the fetch_popularity_data method and 
+        writes the data into MySQL database."""
 
-        if os.path.isfile(csv_name):
-            mode = 'a'  # If file exists, append data
-        else:
-            mode = 'w'  # If file doesn't exist: create and write
+        with eng.connect() as conn:
+            track_table = sa.Table('Tom_pop', sa.MetaData(), autoload_with=eng)
+            conn.execute(sa.insert(track_table, self.fetch_popularity_data()))
 
-        with open(csv_name, mode=mode) as f:
-            f.write(self.fetch_popularity_data())
-            f.write('\n')
-        print("Data written to {}".format(csv_name))
+        print("Data written to track tbl")
 
     def fetch_similar_artists(self):
         try:
@@ -105,7 +113,7 @@ class artistInfoRequest:
     def fetch_top_track_data(self, n_top_tracks):
         """Method of topTrackRequest class. Fetches data with a request object
         from the API, then returns a list of tuples that is taken in by the
-        write_top_track_data method for writing the data to file."""
+        write_top_track_data method for writing the data to the database."""
 
         data = json.loads(self.request.data.decode())
 
@@ -117,32 +125,20 @@ class artistInfoRequest:
 
     def write_top_track_data(self):
         """Method of topTrackRequest class. It takes data via a
-        topTrackRequest fetch method, then writes it to a csv."""
+        topTrackRequest fetch method, then writes it to a MySQL database."""
 
         assert self.request_type == 'artist.getTopTracks', \
                                     "Use appropriate request type"
 
-        csv_name = PATH_PREFIX + self.initials + '_top_track_popularity.csv'
-        if os.path.isfile(csv_name):
-            mode = 'a'
-        else:
-            mode = 'w'
+        list_of_track_tuples = self.fetch_top_track_data(n_top_tracks=5)
 
-        try:
-            with open(csv_name, mode=mode) as f:
+        value_list = [{'Date':str(dt.datetime.now().date()), 'Title':tup[0], 'Playcount':int(tup[1])} for tup in list_of_track_tuples]
 
-                list_of_track_tuples = self.fetch_top_track_data(n_top_tracks=5)
-
-                for tup in list_of_track_tuples:
-                    f.write(str(dt.datetime.now().date()) + ',' +
-                            tup[0] + ',' + tup[1])
-                    f.write('\n')
-
-            print('Data written to {}'.format(csv_name))
-
-        except:
-            print("Error in writing data to {}".format(csv_name))
-
+        with eng.connect() as conn:
+            track_pop_tbl = sa.Table('Tom_track_pop', sa.MetaData(), autoload_with=eng)
+            conn.execute(sa.insert(track_pop_tbl, value_list))
+        
+        print("Data written to Tom_track_pop tbl")
 
 # Get and write generic info
 tom_misch_info_request = artistInfoRequest("Tom Misch", 'artist.getInfo')

@@ -9,3 +9,6 @@ try*.py
 
 # Local copy of stylesheet
 dash_stylesheet.css
+
+# Ignore pycache
+__pycache__
